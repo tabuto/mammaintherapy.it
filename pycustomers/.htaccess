@@ -1,0 +1,20 @@
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/dm4r2ot1/pycustomers2"
+PassengerBaseURI "/pycustomers"
+PassengerPython "/home/dm4r2ot1/virtualenv/pycustomers2/2.7/bin/python"
+PassengerAppLogFile "/home/dm4r2ot1/pycustomers2/pycustomers2.log"
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+# DO NOT REMOVE OR MODIFY. CLOUDLINUX ENV VARS CONFIGURATION BEGIN
+<IfModule Litespeed>
+SetEnv APP_ROOT /pycustomers
+SetEnv APP_SECRET fdkdfAH034kLdfjksdhui89334kl34klsJT1RFkmedfiowEr893
+SetEnv DB_PATH_MYSQL mysql+pymysql://dm4r2ot1_pycustomers:$hornetF18$@localhost/dm4r2ot1_pycustomers
+SetEnv SECRET sdash3jhsd34TA60njkdsGASG2323
+SetEnv SMPT_PORT 465
+SetEnv SMTP_PASSWORD trigeminoleso83!
+SetEnv SMTP_SENDER admin@mammaintherapy.it
+SetEnv SMTP_SERVER authsmtp.securemail.pro
+SetEnv UPLOAD_DIR upload
+SetEnv ENVIROMENT prod
+</IfModule>
+# DO NOT REMOVE OR MODIFY. CLOUDLINUX ENV VARS CONFIGURATION END
