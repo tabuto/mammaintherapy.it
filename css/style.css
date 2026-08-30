@@ -231,6 +231,51 @@ cursor: pointer;
   }
 }
 
+.main-head a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.article-title {
+	font-family: 'ThinkNothing';
+	font-size: 2em;
+	margin-bottom: 0.2em;
+}
+
+.article-meta {
+	font-family: 'Indie Flower';
+	font-size: 1em;
+	color: #666;
+	margin-top: 0;
+}
+
+.article-image {
+	max-width: 100%;
+	height: auto;
+	display: block;
+	margin: 1em auto;
+}
+
+.wrapper .article-body {
+	text-align: left;
+	max-width: 700px;
+	margin: 0 auto;
+}
+
+.wrapper .article-body p {
+	text-align: left;
+	font-family: 'Indie Flower';
+	font-size: 1.3em;
+	line-height: 1.5;
+}
+
+.wrapper .article-body img {
+	max-width: 100%;
+	height: auto;
+	display: block;
+	margin: 1em auto;
+}
+
 @media (min-width: 700px) {
   .wrapper {
     grid-template-columns: 1fr 4fr 1fr;
