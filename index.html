@@ -8,64 +8,126 @@
   <title>mammaintherapy - Home Page</title>
   <meta name="description" content="Storie di sopravvivenza familiare: esperienze di vita, amore e tanto disagio">
   <meta name="author" content="Beatrice Santucci">
+  <meta name="theme-color" content="#1b6969">
 
   <meta property="og:title" content="mammaintherapy - Home Page">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://mammaintherapy.it/">
   <meta property="og:description" content="Storie di sopravvivenza familiare: esperienze di vita, amore e tanto disagio">
-  <!--<meta property="og:image" content="image.png">-->
+  <meta property="og:image" content="https://mammaintherapy.it/img/logo-250.png">
 
   <link rel="icon" href="/favicon.ico">
 
-  
- <link href='https://fonts.googleapis.com' rel='preconnect'/>
-<link crossorigin='anonymous' href='https://fonts.gstatic.com' rel='preconnect'/>
-<link href='https://fonts.googleapis.com' rel='preconnect'/>
-<link crossorigin='anonymous' href='https://fonts.gstatic.com' rel='preconnect'/>
-<link href='https://fonts.googleapis.com/css2?family=Indie+Flower&amp;family=Rock+Salt&amp;display=swap' rel='stylesheet'/>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<link href="css/style.css" rel="stylesheet"/>
-<script src="js/mit.js"></script>
-
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="css/ThinkNothing.woff2" as="font" type="font/woff2" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&amp;display=swap" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+  <script src="js/mit.js" defer></script>
+  <script src="js/game_v2.js" defer></script>
 </head>
 <body>
-	
+
 <div class="wrapper homepage">
-  <header class="main-head"><h1>MAMMA IN THERAPY</h1></header>
-  <article class="content">
-    <img src="img/logo.jpg" width="125" alt="Logo Mamma in therapy"/>
-    
-  <p>Pagina in costruzione...</p>
-  <p>...nel frattempo...</p>
-  <p><button type="button"  class="button" onclick="goToBlog();">Vai al BLOG!</button></p>
-  
-<div class="tooltip">Guida al gioco
-  <span class="tooltiptext">Nessuno ha le istruzioni....</span>
-</div>
-   <div>
-   <canvas id="responsive-canvas" ></canvas>
-    <script src="js/game_v1.js"></script>
-</div>
-  </article>
-  <aside class="side"></aside>
-  <div class="ad"></div>
+  <header class="main-head">
+    <nav class="main-nav" aria-label="Menu principale">
+      <details class="menu">
+        <summary aria-label="Apri il menu" title="Menu"><span class="menu-icon"></span></summary>
+        <ul class="menu-list">
+          <li><a href="/" aria-current="page">Home</a></li>
+          <li><a href="/vetrine.html">Vetrine</a></li>
+          <li><a href="https://blog.mammaintherapy.it/">Blog</a></li>
+          <li><a href="/post.html">Post</a></li>
+          <li><a href="/iniziative.html">Iniziative</a></li>
+          <li><a href="/about-me.html">About me</a></li>
+        </ul>
+      </details>
+    </nav>
+    <h1><a href="/">MAMMA IN THERAPY</a></h1>
+    <img class="head-logo" src="img/logo-250.png" width="86" height="90" alt="Logo Mamma in therapy">
+  </header>
+
+  <main class="content">
+    <p class="lead section-intro">Storie di sopravvivenza familiare: esperienze di vita, amore e tanto disagio.</p>
+
+    <ul class="cards">
+      <li>
+      <a class="card" href="/articles/20261121_calendario_avvento.html">
+        <img class="card-cover" src="img/articles/20261121_calendario_avvento-400.jpg" width="400" height="250" alt="Calendario dell'Avvento Solidale" loading="lazy">
+        <div class="card-body">
+          <h3 class="card-title">Calendario dell'Avvento Solidale</h3>
+        <p class="card-meta">Iniziativa · 21 Novembre 2026</p>
+          <p class="card-text">24 giorni, 24 piccoli gesti: una scatola che a Natale diventa un aiuto concreto.</p>
+        </div>
+      </a>
+      </li>
+      <li>
+      <a class="card" href="/post.html">
+        <img class="card-cover" src="img/articles/i-nuovi-noi-400.jpg" width="400" height="250" alt="I nuovi Noi" loading="lazy">
+        <div class="card-body">
+          <h3 class="card-title">Post</h3>
+          <p class="card-text">Storie di sopravvivenza familiare, scritte e ospitate qui.</p>
+        </div>
+      </a>
+      </li>
+      <li>
+      <a class="card" href="/vetrine.html">
+        <span class="card-cover card-cover--draw" aria-hidden="true">V</span>
+        <div class="card-body">
+          <h3 class="card-title">Vetrine</h3>
+          <p class="card-text">I prodotti che uso davvero e che mi sento di consigliare.</p>
+        </div>
+      </a>
+      </li>
+      <li>
+      <a class="card" href="https://blog.mammaintherapy.it/" rel="noopener" onclick="goToBlog(); return false;">
+        <span class="card-cover card-cover--draw" aria-hidden="true">B</span>
+        <div class="card-body">
+          <h3 class="card-title">Blog</h3>
+          <p class="card-text">Il diario completo, con tutto l'archivio degli anni passati.</p>
+        </div>
+      </a>
+      </li>
+      <li>
+      <a class="card" href="/about-me.html">
+        <img class="card-cover" src="img/articles/about-me-400.jpg" width="400" height="250" alt="Primo piano in bianco e nero degli occhi di Beatrice" loading="lazy">
+        <div class="card-body">
+          <h3 class="card-title">About me</h3>
+          <p class="card-text">Chi sono, come è nato Mamma in Therapy e perché.</p>
+        </div>
+      </a>
+      </li>
+    </ul>
+
+    <section class="game" aria-label="Il gioco di Mamma in Therapy">
+      <canvas id="mit-runner" width="800" height="320"></canvas>
+      <details class="game-help">
+        <summary>Guida al gioco</summary>
+        <p>
+          Da fermi: un tasto qualsiasi (o un tocco) per iniziare.<br>
+          <strong>SPAZIO</strong> o <strong>&#8593;</strong> per saltare,
+          <strong>X</strong> o <strong>&#8594;</strong> per imprecare e far sparire i guai.<br>
+          Da telefono: tocca a sinistra per saltare, a destra per imprecare.
+        </p>
+      </details>
+    </section>
+  </main>
+
   <footer class="main-footer">
-	<a href="https://www.instagram.com/mammaintherapy/"><img src="img/instagram.jpeg" width="50" alt="instagram"/> </a><a href="https://www.facebook.com/MammainTherapy"><img src="img/logo_fb.png" width="50" alt="Facebook"/> </a>
-    <p>© 2022 Mamma in Therapy |  <a href="https://blog.mammaintherapy.it/p/privacy-policy-semplificata.html" title="Privacy Policy."> Privacy Policy</a> | <a href="mailto:info@mammaintherapy.it">Contattami</a> </p>
+    <p class="social">
+      <a href="https://www.instagram.com/mammaintherapy/" aria-label="Mamma in Therapy su Instagram"><img src="img/instagram.jpeg" width="40" height="40" alt="" loading="lazy"></a>
+      <a href="https://www.facebook.com/MammainTherapy" aria-label="Mamma in Therapy su Facebook"><img src="img/logo_fb.png" width="40" height="40" alt="" loading="lazy"></a>
+    </p>
+    <p>&copy; 2026 Mamma in Therapy | <a href="https://blog.mammaintherapy.it/p/privacy-policy-semplificata.html" title="Privacy Policy."> Privacy Policy</a> | <a href="mailto:info@mammaintherapy.it">Contattami</a></p>
   </footer>
 </div>
-	
-</body>
 
-<!-- Google Analytics -->
 <script>
 function goToBlog(){
-gaSendEvent("link","goToBlog","goToBlog");
-window.location.href='https://blog.mammaintherapy.it/';
+	gaSendEvent("link","goToBlog","goToBlog");
+	window.location.href='https://blog.mammaintherapy.it/';
 }
-
 </script>
-<!-- End Google Analytics -->
 
+</body>
 </html>
