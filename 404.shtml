@@ -1,50 +1,65 @@
+<!doctype html>
+
 <html lang="it">
-<head><meta charset="utf-8">
-  
+<head>
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>mammaintherapy - HTTP - 404</title>
+  <title>mammaintherapy - Pagina non trovata</title>
   <meta name="description" content="Storie di sopravvivenza familiare: esperienze di vita, amore e tanto disagio">
   <meta name="author" content="Beatrice Santucci">
+  <meta name="theme-color" content="#1b6969">
 
-  <meta property="og:title" content="mammaintherapy - HTTP 404">
+  <meta property="og:title" content="mammaintherapy - Pagina non trovata">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://mammaintherapy.it/">
+  <meta property="og:url" content="https://mammaintherapy.it/404.html">
   <meta property="og:description" content="Storie di sopravvivenza familiare: esperienze di vita, amore e tanto disagio">
-  <!--<meta property="og:image" content="image.png">-->
+  <meta property="og:image" content="https://mammaintherapy.it/img/logo-250.png">
 
   <link rel="icon" href="/favicon.ico">
 
-  
- <link href='https://fonts.googleapis.com' rel='preconnect'/>
-<link crossorigin='anonymous' href='https://fonts.gstatic.com' rel='preconnect'/>
-<link href='https://fonts.googleapis.com' rel='preconnect'/>
-<link crossorigin='anonymous' href='https://fonts.gstatic.com' rel='preconnect'/>
-<link href='https://fonts.googleapis.com/css2?family=Indie+Flower&amp;family=Rock+Salt&amp;display=swap' rel='stylesheet'/>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<link href="css/style.css" rel="stylesheet"/>
-
-
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="css/ThinkNothing.woff2" as="font" type="font/woff2" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&amp;display=swap" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+  <script src="js/mit.js" defer></script>
 </head>
 <body>
-	
+
 <div class="wrapper homepage">
-  <header class="main-head"><h1>MAMMA IN THERAPY</h1></header>
-  <article class="content">
-    <img src="img/logo.jpg" width="125" alt="Logo Mamma in therapy"/>
-    <h2>Pagina non trovata</h2>
-        <h3>HTTP - 404</h3>
-  </article>
-  <aside class="side"></aside>
-  <div class="ad"></div>
+  <header class="main-head">
+    <nav class="main-nav" aria-label="Menu principale">
+      <details class="menu">
+        <summary aria-label="Apri il menu" title="Menu"><span class="menu-icon"></span></summary>
+        <ul class="menu-list">
+          <li><a href="/">Home</a></li>
+          <li><a href="/vetrine.html">Vetrine</a></li>
+          <li><a href="https://blog.mammaintherapy.it/">Blog</a></li>
+          <li><a href="/post.html">Post</a></li>
+          <li><a href="/iniziative.html">Iniziative</a></li>
+          <li><a href="/about-me.html">About me</a></li>
+        </ul>
+      </details>
+    </nav>
+    <h1><a href="/">MAMMA IN THERAPY</a></h1>
+    <img class="head-logo" src="img/logo-250.png" width="86" height="90" alt="Logo Mamma in therapy">
+  </header>
+
+  <main class="content">
+    <h2 class="article-title">Pagina non trovata</h2>
+    <p class="section-intro">HTTP 404 &mdash; qui non c&apos;&egrave; niente, come il frigo di domenica sera.</p>
+    <p><a class="button" href="/">Torna alla home</a></p>
+  </main>
+
   <footer class="main-footer">
-    <p>© 2022 Mamma in Therapy </p>
+    <p class="social">
+      <a href="https://www.instagram.com/mammaintherapy/" aria-label="Mamma in Therapy su Instagram"><img src="img/instagram.jpeg" width="40" height="40" alt="" loading="lazy"></a>
+      <a href="https://www.facebook.com/MammainTherapy" aria-label="Mamma in Therapy su Facebook"><img src="img/logo_fb.png" width="40" height="40" alt="" loading="lazy"></a>
+    </p>
+    <p>&copy; 2026 Mamma in Therapy | <a href="https://blog.mammaintherapy.it/p/privacy-policy-semplificata.html" title="Privacy Policy."> Privacy Policy</a> | <a href="mailto:info@mammaintherapy.it">Contattami</a></p>
   </footer>
 </div>
-	
+
 </body>
-
-
-
 </html>
