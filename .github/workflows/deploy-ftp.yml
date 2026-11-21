@@ -1,0 +1,85 @@
+# Deploy incrementale via FTP dei file modificati su main.
+# Pubblica in FTPS (TLS esplicito): richiede security=strict e FTP_SERVER impostato
+# all'hostname del certificato, non all'IP ne' a mammaintherapy.it.
+name: Deploy FTP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:          # avvio manuale dalla tab Actions
+    inputs:
+      dry_run:
+        description: "Simula senza caricare"
+        type: boolean
+        default: true
+      server_dir:
+        description: "Cartella remota di destinazione (deve finire con /). Lasciare _deploytest/ per provare senza toccare il sito; './' pubblica sul sito reale"
+        type: string
+        default: "_deploytest/"
+      protocol:
+        description: "Protocollo: ftps (cifrato, TLS esplicito sulla 21) oppure ftp (in chiaro, se l'hosting resetta il canale dati)"
+        type: choice
+        options: [ftps, ftp, ftps-legacy]
+        default: ftps
+      port:
+        description: "Porta FTP. Vuoto = default dell'action (21). Per ftps-legacy serve 990"
+        type: string
+        default: ""
+      security:
+        description: "Verifica del certificato TLS: strict la pretende valida e serve al riuso della sessione TLS sul canale dati (richiede che FTP_SERVER sia l'hostname del certificato, non un IP); loose la ignora"
+        type: choice
+        options: [strict, loose]
+        default: strict
+      log_level:
+        description: "Verbosita del log: verbose mostra il dialogo FTP comando per comando"
+        type: choice
+        options: [standard, verbose, minimal]
+        default: standard
+
+# evita due deploy sovrapposti
+concurrency:
+  group: ftp-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload FTP (solo file cambiati)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # 'ftps' = TLS esplicito sulla 21. Funziona solo insieme a security=strict e a
+          # FTP_SERVER impostato all'hostname del certificato: con l'IP la verifica non puo'
+          # passare, e senza verifica Node rifiuta di riusare la sessione TLS sul canale
+          # dati (CVE-2026-48934) e il server scarta la connessione.
+          # push su main -> ftps; run manuale -> il protocollo scelto negli input
+          protocol: ${{ github.event_name == 'workflow_dispatch' && inputs.protocol || 'ftps' }}
+          # vuoto -> l'action usa il suo default (21); serve solo per ftps-legacy (990)
+          port: ${{ github.event_name == 'workflow_dispatch' && inputs.port || '' }}
+          local-dir: ./
+          # push su main -> sito reale; run manuale -> la cartella scelta negli input
+          # (se la root di login FTP non coincide con la document root, sostituire './'
+          #  qui sotto con es. public_html/ o httpdocs/)
+          server-dir: ${{ github.event_name == 'workflow_dispatch' && inputs.server_dir || './' }}
+          # strict = rejectUnauthorized: true. Il default dell'action e' 'loose', che cifra
+          # ma NON autentica il server: un intercettatore potrebbe presentare un certificato
+          # qualunque e leggere la password FTP. 'strict' lo impedisce, ma pretende che
+          # FTP_SERVER sia l'hostname del certificato. I due valori vanno cambiati insieme.
+          security: ${{ github.event_name == 'workflow_dispatch' && inputs.security || 'strict' }}
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+          log-level: ${{ github.event_name == 'workflow_dispatch' && inputs.log_level || 'standard' }}
+          timeout: 60000            # 60s: hosting condivisi a volte sono lenti ad aprire il canale dati
+          # sorgenti e file di lavoro da non pubblicare
+          # (specificare exclude sostituisce i default, quindi vanno ripetuti)
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .github/**
+            .claude/**
+            backlog/**
+            **/*.md
