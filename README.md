@@ -10,7 +10,7 @@ step, nessun framework, nessuna dipendenza da installare.
 
 | percorso | cosa contiene |
 |---|---|
-| `index.html` | home: riga di presentazione, card in evidenza, gioco in canvas |
+| `index.html` | home: riga di presentazione, card in evidenza, gioco in canvas e classifica |
 | `about-me.html` + `about-me.md` | pagina About me e il suo testo sorgente |
 | `post.html` | indice dei post ospitati sul sito |
 | `iniziative.html` | progetti e raccolte solidali |
@@ -26,6 +26,8 @@ step, nessun framework, nessuna dipendenza da installare.
 | `css/mitblog.css` | foglio di stile del Blogspot esterno, **non** di questo sito |
 | `js/mit.js` | banner cookie e invio eventi ad Analytics |
 | `js/game_v3.js` | il gioco della home (`game_v2.js` e `game_v1.js` sono le versioni precedenti) |
+| `api/score.php` | endpoint PHP della classifica: `GET` la top 10, `POST` registra un punteggio |
+| `api/data/` | **solo sul server**: `scores.json`, lo store della classifica. Non è nel repo (`.gitignore`) e il deploy non lo tocca |
 | `img/` | logo, icone social e `img/articles/` con le foto dei post |
 | `images/mum-hd.png` | la mamma del gioco (gli altri sprite sono `monster*.png` e `poop3.png`) |
 | `404.html`, `404.shtml`, `400.shtml`, `courtesy.html` | pagine di servizio |
@@ -70,7 +72,14 @@ La conversione `.md` → `.html` è manuale: il sito non ha un generatore.
 
 Ogni push su `main` fa partire il workflow **Deploy FTP**, che carica in FTPS i
 soli file cambiati nella document root `httpdocs/`. I `.md`, `.github/`,
-`.claude/` e `backlog/` non vengono pubblicati.
+`.claude/`, `backlog/` e **`api/data/`** non vengono pubblicati: quest'ultima
+contiene `scores.json`, lo store della classifica, che vive e si aggiorna solo
+sul server — se il deploy lo caricasse, ogni push lo riporterebbe vuoto.
+
+> **Nota FTPS.** L'hosting resetta il canale dati sugli upload massicci (molti
+> file in una volta), ma regge bene i deploy incrementali (pochi file cambiati),
+> che sono il caso normale. Un primo caricamento in una cartella vuota può quindi
+> fallire con `ECONNRESET`: in quel caso conviene un upload piccolo per volta.
 
 Il workflow si può lanciare anche a mano dalla tab Actions, con dry-run e
 cartella di destinazione scelti negli input: il default

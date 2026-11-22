@@ -106,6 +106,16 @@
       <p class="game-actions">
         <button type="button" class="button" id="mit-game-open">&#9974; Gioca a schermo intero</button>
       </p>
+      <div class="mit-leaderboard" id="mit-lb" hidden>
+        <h3 class="mit-lb-title">Classifica</h3>
+        <form class="mit-lb-form" id="mit-lb-form" hidden>
+          <p class="mit-lb-prompt" id="mit-lb-prompt">Sei in classifica!</p>
+          <input type="text" id="mit-lb-nick" maxlength="16" autocomplete="off" placeholder="Il tuo nome" aria-label="Il tuo nome per la classifica">
+          <button type="submit" class="button" id="mit-lb-save">Salva</button>
+        </form>
+        <p class="mit-lb-status" id="mit-lb-status" role="status" aria-live="polite"></p>
+        <ol class="mit-lb-list" id="mit-lb-list"></ol>
+      </div>
       <details class="game-help">
         <summary>Guida al gioco</summary>
         <p>
@@ -143,6 +153,99 @@ function goToBlog(){
 	gaSendEvent("link","goToBlog","goToBlog");
 	window.location.href='https://blog.mammaintherapy.it/';
 }
+</script>
+
+<!-- Classifica del gioco: legge/scrive su api/score.php (file JSON lato server).
+     Se PHP non risponde (es. server locale senza PHP) il pannello resta nascosto. -->
+<script>
+(function () {
+	var API = 'api/score.php';
+	var panel = document.getElementById('mit-lb');
+	var list = document.getElementById('mit-lb-list');
+	var form = document.getElementById('mit-lb-form');
+	var nickInput = document.getElementById('mit-lb-nick');
+	var statusEl = document.getElementById('mit-lb-status');
+	var promptEl = document.getElementById('mit-lb-prompt');
+	var canvas = document.getElementById('mit-runner');
+	if (!panel || !list || !form || !canvas) return;
+
+	var board = [];     // ultima classifica nota
+	var pending = null; // { score, durationMs } in attesa del nickname
+
+	function render() {
+		list.innerHTML = '';
+		board.forEach(function (row) {
+			var li = document.createElement('li');
+			var name = document.createElement('span');
+			name.className = 'mit-lb-name';
+			name.textContent = row.n;            // textContent: nessuna iniezione di HTML
+			var pts = document.createElement('span');
+			pts.className = 'mit-lb-pts';
+			pts.textContent = row.p;
+			li.appendChild(name); li.appendChild(pts);
+			list.appendChild(li);
+		});
+	}
+
+	function loadBoard() {
+		fetch(API, { headers: { 'Accept': 'application/json' } })
+			.then(function (r) { return r.ok ? r.json() : null; })
+			.then(function (d) {
+				if (!d || !d.ok || !Array.isArray(d.top)) return; // PHP assente: pannello nascosto
+				board = d.top; render(); panel.hidden = false;
+			})
+			.catch(function () {});
+	}
+
+	// Il punteggio puo' entrare tra i primi 10? Controllo lasco: l'arbitro e' il server.
+	function qualifies(score) {
+		if (!score || score <= 0) return false;
+		if (board.length < 10) return true;
+		var min = board.reduce(function (m, r) { return Math.min(m, r.p); }, Infinity);
+		return score > min;
+	}
+
+	canvas.addEventListener('mit:gameover', function (e) {
+		var d = e.detail || {};
+		if (panel.hidden || !qualifies(d.score)) { form.hidden = true; return; }
+		pending = { score: d.score, durationMs: d.durationMs };
+		promptEl.textContent = d.isRecord
+			? 'Nuovo record: ' + d.score + ' punti! Entra in classifica:'
+			: 'Sei in classifica con ' + d.score + ' punti!';
+		try { nickInput.value = localStorage.getItem('mit_lb_nick') || ''; } catch (err) {}
+		statusEl.textContent = '';
+		form.hidden = false;
+		nickInput.focus();
+	});
+
+	form.addEventListener('submit', function (e) {
+		e.preventDefault();
+		if (!pending) return;
+		var nick = (nickInput.value || '').trim().slice(0, 16);
+		try { if (nick) localStorage.setItem('mit_lb_nick', nick); } catch (err) {}
+		var save = document.getElementById('mit-lb-save');
+		save.disabled = true; statusEl.textContent = 'Salvataggio…';
+		fetch(API, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ nickname: nick, punti: pending.score, durata_ms: pending.durationMs })
+		})
+			.then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+			.then(function (res) {
+				save.disabled = false;
+				if (!res.ok || !res.d || !res.d.ok) {
+					statusEl.textContent = (res.d && res.d.error) ? res.d.error : 'Non salvato, riprova.';
+					return;
+				}
+				board = res.d.top; render();
+				form.hidden = true; pending = null;
+				statusEl.textContent = res.d.rank ? 'In classifica, posizione ' + res.d.rank + '!' : 'Punteggio registrato.';
+			})
+			.catch(function () { save.disabled = false; statusEl.textContent = 'Rete non disponibile, riprova.'; });
+	});
+
+	loadBoard();
+})();
 </script>
 
 </body>

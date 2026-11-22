@@ -197,6 +197,19 @@ divergere.
   `gaSendEvent`, se presente.
 - Le pagine in costruzione usano `<p class="page-wip">…</p>`: quando arriva il
   contenuto vero, va rimosso (e con lui ogni frase tipo "nel frattempo").
+- **Classifica del gioco.** Il game over emette sul canvas un evento
+  `mit:gameover` (`detail`: `score`, `best`, `isRecord`, `durationMs`); lo
+  script inline in `index.html` lo ascolta, chiede un nickname se il punteggio
+  entra tra i primi 10 e lo invia a `api/score.php` (`GET` la top 10, `POST`
+  registra). Lo store è `api/data/scores.json` (una voce per nickname, la
+  migliore; max 10). Scelte: **niente login** (solo nickname, salvato in
+  `localStorage` come `mit_lb_nick`), mitigazioni anti-cheat **leggere** (tetto
+  al punteggio, coerenza punti/durata, nickname ripulito e filtrato), **nessun
+  IP** registrato né rate limit per IP. Privacy: si salva solo un nickname
+  libero e un numero, nessun dato personale, nessun trasferimento a terzi → la
+  privacy policy non cambia. La classifica alimentata dal browser è
+  falsificabile: una riga palesemente falsa si cancella a mano dal JSON. I
+  parametri (tetti, soglie, blocklist) sono costanti in testa a `api/score.php`.
 
 ---
 
@@ -234,9 +247,19 @@ committa su `main` direttamente.
 - Il deploy è incrementale e si basa su `.ftp-deploy-sync-state.json` scritto
   nella cartella di destinazione: se il log dice "this must be your first
   publish" e non lo è, si sta guardando nella cartella sbagliata.
-- Non vengono pubblicati: `**/*.md`, `.github/`, `.claude/`, `backlog/`, `.git*`.
-  Quindi README.md, AGENT.md e i sorgenti `.md` restano nel repo. `llms.txt`,
-  `sitemap.xml` e `robots.txt` **sì**, vengono pubblicati.
+- Non vengono pubblicati: `**/*.md`, `.github/`, `.claude/`, `backlog/`,
+  `.git*` e **`api/data/`**. Quindi README.md, AGENT.md e i sorgenti `.md`
+  restano nel repo. `llms.txt`, `sitemap.xml` e `robots.txt` **sì**, vengono
+  pubblicati.
+- `api/data/` è escluso di proposito: contiene `scores.json`, lo store della
+  classifica del gioco, che vive e si aggiorna **solo sul server**. Se il deploy
+  lo caricasse, ogni push riporterebbe la classifica a vuota. È anche in
+  `.gitignore`, quindi non finisce nel repo. Il PHP crea cartella e file da sé
+  al primo punteggio.
+- L'hosting resetta il canale dati FTPS sugli **upload massicci** (prima
+  pubblicazione in una cartella vuota, molti file in una volta): fallisce con
+  `ECONNRESET` sul data socket. I deploy **incrementali** (pochi file cambiati)
+  passano senza problemi, ed è il caso normale.
 - Per provare senza rischi: run manuale dalla tab Actions con `dry_run=true`,
   o con `server_dir=httpdocs/_deploytest/` per un upload vero ma isolato,
   visibile su `https://mammaintherapy.it/_deploytest/`.

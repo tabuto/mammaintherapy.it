@@ -84,3 +84,5 @@ jobs:
             .claude/**
             backlog/**
             **/*.md
+            api/data/**
+            api/data

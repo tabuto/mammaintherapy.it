@@ -128,7 +128,7 @@
     var stress, sickTimer, invuln, shake, shakeDur, stressFlash, blockedMsgCd, lastCause;
     var phase, phaseTimer, bonusAlpha = 0, cloud, cloudCd;
     var pressed = { jump: 0, shout: 0 }; // feedback visivo dei pulsanti
-    var best = 0, overAt = 0;
+    var best = 0, overAt = 0, startedAt = 0;
     try { best = parseInt(localStorage.getItem('mit_runner_best') || '0', 10) || 0; } catch (e) {}
 
     function reset() {
@@ -176,14 +176,22 @@
     }
     function start() {
       if (state === 'over' && performance.now() - overAt < 600) return; // evita restart accidentale
-      reset(); state = 'play';
+      reset(); state = 'play'; startedAt = performance.now();
       track('start');
     }
     function gameOver() {
       state = 'over'; overAt = performance.now();
       setShake(CONFIG.gameOverShake);
-      if (score > best) { best = score; try { localStorage.setItem('mit_runner_best', String(best)); } catch (e) {} }
+      var wasRecord = score > best;
+      if (wasRecord) { best = score; try { localStorage.setItem('mit_runner_best', String(best)); } catch (e) {} }
       track('gameOver', String(score));
+      // Avvisa la pagina (classifica): punteggio, record personale e durata della partita.
+      try {
+        canvas.dispatchEvent(new CustomEvent('mit:gameover', { detail: {
+          score: score, best: best, isRecord: wasRecord,
+          durationMs: startedAt ? Math.round(overAt - startedAt) : 0
+        } }));
+      } catch (e) {}
     }
     // Pausa: il mondo si ferma e compaiono "Riprendi" ed "Esci"
     function pause() {

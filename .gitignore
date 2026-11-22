@@ -1,0 +1,3 @@
+# Dati runtime della classifica del gioco: vivono solo sul server,
+# il deploy FTP li esclude (api/data/** in deploy-ftp.yml). Mai committarli.
+api/data/
