@@ -2,7 +2,7 @@
 
 **Branch:** `release/v2.4`
 **Data:** 22 novembre 2026
-**Stato:** proposta (da approvare prima di implementare)
+**Stato:** implementato (in attesa della prova a video sul server con PHP)
 
 ---
 
@@ -130,3 +130,54 @@ pubblico con credenziali in chiaro (MySQL, SMTP, due secret Flask). Rimosso in
 repo: toglierlo di lì richiede `git filter-repo` + force-push, non fatto.
 Da ruotare/dismettere, se ancora esistono: DB e utente MySQL `dm4r2ot1_pycustomers`,
 e i secret dell'app Flask se gira ancora da qualche parte.
+
+---
+
+## 9. Decisioni prese e implementazione (22 novembre 2026)
+
+**Check PHP (prerequisito §7): superato.** `ping.php` temporaneo caricato in
+`httpdocs/` → **PHP 8.4.28** (PHP-FPM, `cgi-fcgi`), scrittura su cartella `ok`,
+estensione JSON presente. Probe poi rimosso. Via PHP + JSON confermata.
+
+Risposte ai nodi della §5:
+
+| nodo | scelta |
+|---|---|
+| 5.1 identità | **niente login**: solo nickname, salvato in `localStorage` (`mit_lb_nick`), pre-compilato al game over |
+| 5.2 anti-cheat | solo **mitigazioni leggere**: tetto assoluto al punteggio, coerenza punti/durata, nickname ripulito e filtrato. **Niente** rate limit per IP |
+| 5.3 privacy | **nessun IP** registrato né filtrato. Si salva solo nickname + punteggio → nessun dato personale, policy invariata |
+| guardia DoS | corpo POST limitato (1 KB), classifica tenuta a **max 10** voci (file di dimensione costante), scrittura su disco **solo** se il punteggio entra davvero |
+| parità di nick | una sola voce per nickname: va in **update** solo se è un record personale (punteggio più alto) |
+| deploy | `api/data/**` escluso dal workflow FTP e in `.gitignore`: `scores.json` vive solo sul server |
+
+### File
+
+- **`api/score.php`** — `GET` top 10, `POST {nickname, punti, durata_ms}`.
+  Store `api/data/scores.json` (creato da sé al primo punteggio). Parametri
+  tunabili in testa (`MAX_POINTS`, `MAX_POINTS_PER_SEC`, `MIN_DURATION_MS`,
+  `MAX_BODY_BYTES`, `TOP_N`, `BLOCKLIST`). Scrittura con `flock(LOCK_EX)`.
+- **`js/game_v3.js`** — `start()` registra l'istante d'avvio; `gameOver()` emette
+  l'evento `mit:gameover` sul canvas con `score`, `best`, `isRecord`, `durationMs`.
+- **`index.html`** — pannello `.mit-leaderboard` sotto al gioco + script inline:
+  carica la top 10, al game over chiede il nickname se il punteggio qualifica,
+  invia il `POST`, ridisegna. Nickname reso con `textContent` (niente XSS).
+  Se PHP non risponde (server locale senza PHP) il pannello resta nascosto.
+- **`css/style.css`** — stili del pannello e della lista.
+- **`.github/workflows/deploy-ftp.yml`** — aggiunto `api/data/**` all'`exclude`.
+- **`.gitignore`** (nuovo) — ignora `api/data/`.
+- **`README.md`, `AGENT.md`, `sitemap.xml`** — aggiornati (struttura, nota deploy,
+  `lastmod` della home).
+
+### Dove si mostra la classifica
+
+Deciso un **pannello HTML sotto al canvas** (sempre visibile in home) invece del
+disegno dentro al canvas: più semplice, accessibile, e permette un vero campo di
+testo per il nickname (il game over nel canvas non lo consentirebbe senza codice
+di input su misura). Il form compare solo quando il punteggio entra tra i primi 10.
+
+### Da verificare sul server (non fattibile in locale: niente PHP qui)
+
+- [ ] `GET /api/score.php` → `{"ok":true,"top":[]}` al primo colpo
+- [ ] una partita vera: il form appare, il `POST` salva, il pannello si aggiorna
+- [ ] `api/data/scores.json` creato con permessi giusti e **non** sovrascritto dal deploy
+- [ ] mbstring attivo (c'è il ripiego `lc()`, ma meglio confermarlo)
