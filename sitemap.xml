@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Mappa del sito per i motori di ricerca.
+
+  Va aggiornata a ogni pagina aggiunta, rimossa o modificata nei contenuti:
+  - pagina nuova    -> aggiungi un <url> (ordine: radice prima, poi articoli)
+  - testo cambiato  -> aggiorna <lastmod> di quella pagina (formato AAAA-MM-GG)
+  Non vanno elencate: 404.html, 404.shtml, 400.shtml, courtesy.html,
+  articles/post-template.html, e le cartelle mit/ e pycustomers/.
+  Istruzioni complete in AGENT.md.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://mammaintherapy.it/</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://mammaintherapy.it/about-me.html</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://mammaintherapy.it/post.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://mammaintherapy.it/iniziative.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://mammaintherapy.it/vetrine.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://mammaintherapy.it/articles/20261121_calendario_avvento.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://mammaintherapy.it/articles/i-nuovi-noi.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+</urlset>
