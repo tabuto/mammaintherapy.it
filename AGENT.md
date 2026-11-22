@@ -100,8 +100,8 @@ sempre questo, in fondo al `.wrapper`:
 
 Dentro `articles/` i `src` delle immagini diventano `../img/...`, oppure
 root-assoluti. Il link alla privacy policy è obbligatorio perché il sito scrive
-un cookie di tracciamento (`js/mit.js` + Analytics): senza quel rimando il
-banner non basta.
+un cookie di tracciamento (`js/mit.js` + Google Analytics 4): senza quel
+rimando il banner non basta.
 
 ---
 
@@ -170,8 +170,18 @@ divergere.
   `@font-face` esclude `U+0027` e `U+2019` con `unicode-range`, così
   l'apostrofo ricade su Indie Flower. Non rimuovere quella riga.
 - `js/mit.js` (banner cookie, `gaSendEvent`) e `js/game_v3.js` (il gioco) si
-  caricano con `defer`. L'evento Analytics `goToBlog` sulla card Blog va
+  caricano con `defer`. L'evento `link_go_to_blog` sulla card Blog va
   conservato.
+- Analytics e **GA4 via gtag.js** (`GA4_MEASUREMENT_ID` in testa a `js/mit.js`).
+  `gaInit()` inietta `gtag/js` e `gaSendEvent(categoria, azione, etichetta)`
+  manda l'evento, **entrambi solo dopo il consenso** (`checkCookies()`): senza
+  cookie `cc_mit_tracking=yes` non viene caricato nulla e nessun evento parte.
+  `gaSendEvent` conserva la firma a tre argomenti di Universal Analytics perche
+  e chiamata dalle pagine e dai `js/game_v*.js`: `ga4EventName()` traduce la
+  coppia categoria/azione in un nome snake_case valido per GA4 (`game` +
+  `gameOver` -> `game_over`, senza raddoppiare il prefisso), categoria e azione
+  originali restano nei parametri `event_category`/`event_action` e un'etichetta
+  numerica finisce anche in `value`.
 - Il gioco (`js/game_v3.js`, runner v7) si avvia da sé sul canvas `#mit-runner`
   e prende gli sprite da `images/` (la mamma è `images/mum-hd.png`, ad alta
   risoluzione: va disegnata con `imageSmoothingEnabled`, non a pixel netti). Il
@@ -182,8 +192,9 @@ divergere.
   su macOS), quelli sul canvas sì. Non reintrodurre un tasto di chiusura HTML.
   Il bilanciamento (stress, malattia, ferie, velocità, durata delle scosse) sta
   tutto in `CONFIG` in testa al file, esposto anche come `MammaRunner.CONFIG`.
-  Il gioco manda eventi Analytics `game/start`, `game/pause`, `game/quit` e
-  `game/gameOver` tramite `gaSendEvent`, se presente.
+  Il gioco manda gli eventi GA4 `game_start`, `game_pause`, `game_quit` e
+  `game_over` (con il punteggio in `event_label` e `value`) tramite
+  `gaSendEvent`, se presente.
 - Le pagine in costruzione usano `<p class="page-wip">…</p>`: quando arriva il
   contenuto vero, va rimosso (e con lui ogni frase tipo "nel frattempo").
 
