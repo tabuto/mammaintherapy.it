@@ -143,31 +143,64 @@ span = document.getElementsByClassName("close")[0];
 	 //modal.style.display = "flex";
 }
 
-// analytics
+// analytics - Google Analytics 4 (gtag.js)
 
-function gaSendEvent(category,action,label){
-	if(checkCookies()){
-		ga('send', {
-		  hitType: 'event',
-		  eventCategory: category,
-		  eventAction: action,
-		  eventLabel: label
-		});
+// Measurement ID della proprieta GA4 di mammaintherapy.it
+var GA4_MEASUREMENT_ID = "G-ZRSE0MBL8C";
+
+// camelCase -> snake_case: GA4 accetta solo lettere, numeri e underscore
+function ga4Snake(s){
+	return String(s || "")
+		.replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+		.replace(/[^A-Za-z0-9_]+/g, "_")
+		.replace(/_+/g, "_")
+		.replace(/^_|_$/g, "")
+		.toLowerCase();
+}
+
+// Nome evento GA4 a partire dalla vecchia coppia categoria/azione di UA.
+// "game" + "gameOver" -> "game_over" (il prefisso non si raddoppia),
+// "link" + "goToBlog" -> "link_go_to_blog".
+function ga4EventName(category, action){
+	var cat = ga4Snake(category);
+	var name = ga4Snake(action);
+	if(!name) name = cat;
+	if(cat && name !== cat && name.indexOf(cat + "_") !== 0) name = cat + "_" + name;
+	if(/^[0-9]/.test(name)) name = "e_" + name;
+	return name.substring(0, 40);
+}
+
+function gaSendEvent(category, action, label){
+	if(!checkCookies()) return;
+	if(typeof window.gtag !== "function") return;
+
+	var params = { event_category: category, event_action: action };
+	if(label !== undefined && label !== null && label !== ""){
+		params.event_label = String(label);
+		if(!isNaN(parseFloat(label)) && isFinite(label)) params.value = Number(label);
 	}
+
+	window.gtag("event", ga4EventName(category, action), params);
 }
 
 function gaInit(){
-	if(checkCookies()){
-		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-		})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-		ga('create', 'UA-219081934-1', 'auto');
-		ga('send', 'pageview');
-		console.log("ga - init");
+	if(!checkCookies()) return;
+	if(!GA4_MEASUREMENT_ID || GA4_MEASUREMENT_ID.indexOf("G-") !== 0 || GA4_MEASUREMENT_ID === "G-XXXXXXXXXX"){
+		console.warn("ga4 - Measurement ID non configurato: nessun dato inviato");
+		return;
 	}
-	
+
+	window.dataLayer = window.dataLayer || [];
+	window.gtag = function(){ window.dataLayer.push(arguments); };
+
+	var s = document.createElement("script");
+	s.async = true;
+	s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(GA4_MEASUREMENT_ID);
+	document.getElementsByTagName("script")[0].parentNode.appendChild(s);
+
+	window.gtag("js", new Date());
+	window.gtag("config", GA4_MEASUREMENT_ID);
+	console.log("ga4 - init");
 }
 
 
