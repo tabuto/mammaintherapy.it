@@ -27,11 +27,11 @@
   // Come si chiama il guaio nella schermata finale: "Esaurita per virus", "Esaurita per pannolino"...
   // I cartelli non stanno qui: usano la scritta che portano addosso.
   var CAUSE_LABELS = {
-    baby: 'capricci', diaper: 'pannolino', virus: 'virus', staph: 'stafilococco', rain: 'pioggia'
+    baby: 'crisi', diaper: 'pannolino', virus: 'rotavirus', staph: 'stafilococco', rain: 'pioggia'
   };
 
   // Come si chiama ogni bonus delle ferie quando viene raccolto
-  var BONUS_LABELS = { cocktail: 'cocktail', beer: 'birra', book: 'libro' };
+  var BONUS_LABELS = { cocktail: 'spritz', beer: 'birrozza', book: 'libro' };
 
   var WORD_HIT = '#e03131';   // rosso: guaio preso
   var WORD_BONUS = '#2b8a3e'; // verde: bonus raccolto
