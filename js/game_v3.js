@@ -30,6 +30,12 @@
     baby: 'capricci', diaper: 'pannolino', virus: 'virus', staph: 'stafilococco', rain: 'pioggia'
   };
 
+  // Come si chiama ogni bonus delle ferie quando viene raccolto
+  var BONUS_LABELS = { cocktail: 'cocktail', beer: 'birra', book: 'libro' };
+
+  var WORD_HIT = '#e03131';   // rosso: guaio preso
+  var WORD_BONUS = '#2b8a3e'; // verde: bonus raccolto
+
   // ================= PARAMETRI DI TUNING =================
   // Tutti i valori di bilanciamento in un unico punto. Tempi in secondi, distanze in pixel logici.
   var CONFIG = {
@@ -261,6 +267,17 @@
       popups.push({ x: mum.x + mum.w + 50, y: mum.y - mum.h + 20 - stack * 22, txt: txt, life: life, c: color, mum: true });
     }
 
+    // Scritta che parte dal punto dell'urto, vola al centro e si ingrandisce:
+    // la stessa animazione delle imprecazioni, usata anche per guai e bonus.
+    function flashWord(txt, x, y, color) {
+      ctx.font = 'bold 20px ' + FONT;
+      bigWords.push({
+        txt: txt, w20: ctx.measureText(txt).width, x0: x, y0: y,
+        life: CONFIG.bigWordLife, total: CONFIG.bigWordLife,
+        rot: (Math.random() - 0.5) * 0.12, color: color
+      });
+    }
+
     // Nome del guaio per la schermata finale: i cartelli usano la propria scritta
     function causeOf(o) {
       if (o.label) return o.label.toLowerCase();
@@ -275,6 +292,7 @@
       lastCause = causeOf(o);
       setShake(CONFIG.hitShake); stressFlash = 0.5;
       burst(o.x + o.w / 2, o.y - o.h / 2, '#e03131');
+      flashWord(lastCause.toUpperCase(), o.x + o.w / 2, o.y - o.h / 2, WORD_HIT);
       mumPopup('+' + add + ' stress', '#e03131', 1);
       if (CONFIG.sickTypes.indexOf(o.type) >= 0) {
         sickTimer = CONFIG.sickDuration;
@@ -292,6 +310,7 @@
       for (var i = 0; i < 12; i++) {
         particles.push({ x: o.x + o.w / 2, y: o.y - o.h / 2, vx: (Math.random() - 0.5) * 300, vy: -Math.random() * 300, life: 0.6, c: '#fab005' });
       }
+      flashWord((BONUS_LABELS[o.type] || o.type).toUpperCase(), o.x + o.w / 2, o.y - o.h / 2, WORD_BONUS);
       mumPopup(before > 0 ? '-' + Math.round(before - stress) + ' stress' : '+' + it.points, '#2b8a3e', 1);
     }
 
@@ -423,7 +442,7 @@
             burst(o.x + o.w / 2, o.y - o.h / 2, o.color || '#c0392b');
             popups.push({ x: o.x + o.w / 2, y: o.y - o.h - 8, txt: '+' + o.shotPts, life: 0.8 });
             // L'imprecazione esplode a tutto schermo partendo dal punto di collisione
-            bigWords.push({ txt: s.txt, w20: s.w, x0: cx + s.w / 2, y0: cy, life: CONFIG.bigWordLife, total: CONFIG.bigWordLife, rot: (Math.random() - 0.5) * 0.12 });
+            flashWord(s.txt, cx + s.w / 2, cy);
             obstacles.splice(j, 1);
             used = true;
             break;
