@@ -447,31 +447,6 @@ html.mit-fs-lock body {
 	overscroll-behavior: none;
 }
 
-/* Il tasto di chiusura compare solo a schermo intero */
-.mit-close {
-	display: none;
-	position: absolute;
-	top: calc(env(safe-area-inset-top) + 8px);
-	right: calc(env(safe-area-inset-right) + 8px);
-	width: 44px;
-	height: 44px;
-	border: 2px solid var(--mit-ink);
-	border-radius: 50%;
-	background: #fff;
-	color: var(--mit-ink);
-	font-family: var(--font-ui);
-	font-size: 1.1rem;
-	line-height: 1;
-	cursor: pointer;
-}
-
-.mit-game.mit-fs .mit-close { display: block; }
-
-.mit-close:focus-visible {
-	outline: 3px solid #9ad1d1;
-	outline-offset: 2px;
-}
-
 .game-actions {
 	margin: 0.9em 0 0;
 }

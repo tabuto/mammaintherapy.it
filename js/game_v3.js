@@ -1,9 +1,11 @@
-// Mamma in Therapy - Runner v6
+// Mamma in Therapy - Runner v7
 // Gioco a scorrimento: la mamma corre, salta e lancia imprecazioni censurate contro gli ostacoli.
 // Uso:
-//   var game = MammaRunner(canvas, { mum: 'images/mum.png', baby: 'images/monster.png', baby2: 'images/monster2.png', poop: 'images/poop3.png' });
+//   var game = MammaRunner(canvas, { mum: 'images/mum-hd.png', baby: 'images/monster.png', baby2: 'images/monster2.png', poop: 'images/poop3.png' });
 //   MammaRunner.enableFullscreen(game, containerEl, openBtn, closeBtn);
 // Il canvas deve stare dentro un contenitore dedicato (il suo parentElement).
+// Pausa e chiusura dello schermo intero sono disegnate dentro al canvas: restano
+// visibili anche dove i pulsanti HTML sopra al canvas non si vedono.
 (function (global) {
   'use strict';
 
@@ -12,7 +14,7 @@
   var BW = 720, BH = 320;
   var BW_PORTRAIT = 540; // in verticale l'area base è più stretta, così sprite e ostacoli restano grandi
   var FONT = "'Indie Flower', cursive";
-  var MUM_SCALE = 2; // sprite mum.png raddoppiato (50x52 -> 100x104)
+  var MUM_W = 100, MUM_H = 104; // misura a cui viene disegnato lo sprite della mamma
 
   var CURSES = [
     'Mannaggia a #@%!', 'P*****a miseria!', 'Ma che c***o!', 'Porc@#&!!',
@@ -21,6 +23,12 @@
   ];
   var STRIKES = ['SCIOPERO', 'SCIOPERO SCUOLE', 'SCIOPERO MEZZI', 'ASILO CHIUSO'];
   var VACATION_SIGNS = ['CALAMITÀ NATURALE', 'BLOCCO STRADALE', 'SCIOPERO MEZZI', 'GUERRA', 'PANDEMIA'];
+
+  // Come si chiama il guaio nella schermata finale: "Esaurita per virus", "Esaurita per pannolino"...
+  // I cartelli non stanno qui: usano la scritta che portano addosso.
+  var CAUSE_LABELS = {
+    baby: 'capricci', diaper: 'pannolino', virus: 'virus', staph: 'stafilococco', rain: 'pioggia'
+  };
 
   // ================= PARAMETRI DI TUNING =================
   // Tutti i valori di bilanciamento in un unico punto. Tempi in secondi, distanze in pixel logici.
@@ -60,6 +68,8 @@
     shootableTypes: ['strike', 'vacation'], // ostacoli che si abbattono con le imprecazioni
     stressDecayPerSec: 0,     // recupero di stress al secondo (0 = nessun recupero)
     hitInvulnerability: 1.2,  // secondi di invulnerabilità dopo un colpo
+    hitShake: 0.3,            // durata della scossa quando si prende un colpo
+    gameOverShake: 1.6,       // durata del terremoto finale, poi lo schermo si ferma
 
     // Malattia (virus e batterio)
     sickTypes: ['virus', 'staph'], // ostacoli che fanno ammalare
@@ -107,25 +117,34 @@
     });
 
     // --- Stato del gioco ---
-    var state = 'ready'; // ready | play | over
+    var state = 'ready'; // ready | play | pause | over
     var mum, obstacles, shouts, particles, popups, bigWords, speed, distance, score, spawnTimer, shoutCooldown, t = 0;
-    var stress, sickTimer, invuln, shake, stressFlash, blockedMsgCd;
+    var stress, sickTimer, invuln, shake, shakeDur, stressFlash, blockedMsgCd, lastCause;
     var phase, phaseTimer, bonusAlpha = 0, cloud, cloudCd;
     var pressed = { jump: 0, shout: 0 }; // feedback visivo dei pulsanti
     var best = 0, overAt = 0;
     try { best = parseInt(localStorage.getItem('mit_runner_best') || '0', 10) || 0; } catch (e) {}
 
     function reset() {
-      mum = { x: 50, y: GROUND, vy: 0, w: 50 * MUM_SCALE, h: 52 * MUM_SCALE, onGround: true, shoutAnim: 0 };
+      mum = { x: 50, y: GROUND, vy: 0, w: MUM_W, h: MUM_H, onGround: true, shoutAnim: 0 };
       obstacles = []; shouts = []; particles = []; popups = []; bigWords = [];
       speed = CONFIG.speedStart; distance = 0; score = 0; spawnTimer = CONFIG.spawnFirstDelay; shoutCooldown = 0;
-      stress = 0; sickTimer = 0; invuln = 0; shake = 0; stressFlash = 0; blockedMsgCd = 0;
+      stress = 0; sickTimer = 0; invuln = 0; shake = 0; shakeDur = CONFIG.hitShake; stressFlash = 0;
+      blockedMsgCd = 0; lastCause = '';
       phase = 'work'; phaseTimer = CONFIG.workDuration; cloud = null; cloudCd = 0;
     }
     reset();
 
+    // Agganci allo schermo intero, impostati da MammaRunner.enableFullscreen
+    var fs = null;
+    function isFullscreen() { return !!(fs && fs.isOpen()); }
+
+    // Scossa dello schermo: durata e intensità vanno insieme, così il terremoto si spegne da solo
+    function setShake(dur) { shake = dur; shakeDur = dur; }
+
     // --- Comandi ---
     function jump() {
+      if (state === 'pause') return;
       pressed.jump = 0.15;
       if (state !== 'play') return start();
       if (sickTimer > 0) { // malata: niente salti
@@ -138,6 +157,7 @@
       if (mum.onGround) { mum.vy = CONFIG.jumpVelocity; mum.onGround = false; }
     }
     function shout() {
+      if (state === 'pause') return;
       pressed.shout = 0.15;
       if (state !== 'play') return start();
       if (shoutCooldown > 0) return;
@@ -155,26 +175,62 @@
     }
     function gameOver() {
       state = 'over'; overAt = performance.now();
+      setShake(CONFIG.gameOverShake);
       if (score > best) { best = score; try { localStorage.setItem('mit_runner_best', String(best)); } catch (e) {} }
       track('gameOver', String(score));
+    }
+    // Pausa: il mondo si ferma e compaiono "Riprendi" ed "Esci"
+    function pause() {
+      if (state !== 'play') return;
+      state = 'pause';
+      track('pause');
+    }
+    function resume() {
+      if (state !== 'pause') return;
+      state = 'play';
+      last = performance.now(); // niente salto temporale alla ripresa
+    }
+    function togglePause() {
+      if (state === 'play') pause(); else if (state === 'pause') resume();
+    }
+    // Esci: partita abbandonata, si torna alla schermata iniziale e si lascia lo schermo intero
+    function quit() {
+      reset(); state = 'ready';
+      track('quit');
+      if (isFullscreen()) fs.close();
     }
     // Integrazione con Google Analytics del sito, se presente
     function track(action, label) {
       if (typeof global.gaSendEvent === 'function') { try { global.gaSendEvent('game', action, label || ''); } catch (e) {} }
     }
 
-    // Tastiera: Spazio/Su = salto, X/Invio/Destra = imprecazione
+    // Tastiera: Spazio/Su = salto, X/Invio/Destra = imprecazione, P = pausa
     global.addEventListener('keydown', function (e) {
       if (!isVisible()) return;
+      if (e.code === 'KeyP') { e.preventDefault(); return togglePause(); }
+      if (state === 'pause') { // in pausa la tastiera non gioca: riprende e basta
+        if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); resume(); }
+        return;
+      }
       if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') { e.preventDefault(); jump(); }
       else if (e.code === 'KeyX' || e.code === 'Enter' || e.code === 'ArrowRight' || e.code === 'KeyD') { e.preventDefault(); shout(); }
     });
 
-    // Touch/mouse: pulsanti se presenti, altrimenti metà sinistra = salto, metà destra = imprecazione
+    // Touch/mouse: prima i pulsanti disegnati sul canvas, poi i pulsantoni,
+    // altrimenti metà sinistra = salto, metà destra = imprecazione
     canvas.addEventListener('pointerdown', function (e) {
       e.preventDefault();
       var r = canvas.getBoundingClientRect();
       var lx = (e.clientX - r.left) / scale, ly = (e.clientY - r.top) / scale;
+      var hud = hudButtons();
+      if (hud.pause && inRect(lx, ly, hud.pause)) return togglePause();
+      if (hud.close && inRect(lx, ly, hud.close)) return fs.close();
+      if (state === 'pause') {
+        var pb = pauseButtons();
+        if (inRect(lx, ly, pb.resume)) return resume();
+        if (inRect(lx, ly, pb.exit)) return quit();
+        return; // in pausa il resto del canvas non gioca
+      }
       if (buttons) {
         if (inRect(lx, ly, buttons.jump)) return jump();
         if (inRect(lx, ly, buttons.shout)) return shout();
@@ -205,12 +261,19 @@
       popups.push({ x: mum.x + mum.w + 50, y: mum.y - mum.h + 20 - stack * 22, txt: txt, life: life, c: color, mum: true });
     }
 
+    // Nome del guaio per la schermata finale: i cartelli usano la propria scritta
+    function causeOf(o) {
+      if (o.label) return o.label.toLowerCase();
+      return CAUSE_LABELS[o.type] || 'troppo stress';
+    }
+
     // Ostacolo preso: stress, eventuale malattia, game over se si supera il limite
     function takeHit(o) {
       var add = CONFIG.stressPerHit[o.type] || 0;
       stress = Math.min(CONFIG.stressMax, stress + add);
       invuln = CONFIG.hitInvulnerability;
-      shake = 0.3; stressFlash = 0.5;
+      lastCause = causeOf(o);
+      setShake(CONFIG.hitShake); stressFlash = 0.5;
       burst(o.x + o.w / 2, o.y - o.h / 2, '#e03131');
       mumPopup('+' + add + ' stress', '#e03131', 1);
       if (CONFIG.sickTypes.indexOf(o.type) >= 0) {
@@ -289,9 +352,15 @@
 
     // --- Aggiornamento ---
     function update(dt) {
+      if (state === 'pause') return; // in pausa il mondo sta fermo
       t += dt;
       pressed.jump = Math.max(0, pressed.jump - dt);
       pressed.shout = Math.max(0, pressed.shout - dt);
+      // Fuori dal blocco di gioco: così il terremoto finale dura poco e poi si ferma,
+      // e la mamma smette di lampeggiare sulla schermata di fine partita
+      shake = Math.max(0, shake - dt);
+      stressFlash = Math.max(0, stressFlash - dt);
+      invuln = Math.max(0, invuln - dt);
       bigWords.forEach(function (b) { b.life -= dt; });
       bigWords = bigWords.filter(function (b) { return b.life > 0; });
       // Dissolvenza dello sfondo delle ferie
@@ -304,9 +373,6 @@
       shoutCooldown = Math.max(0, shoutCooldown - dt);
       mum.shoutAnim = Math.max(0, mum.shoutAnim - dt);
       sickTimer = Math.max(0, sickTimer - dt);
-      invuln = Math.max(0, invuln - dt);
-      shake = Math.max(0, shake - dt);
-      stressFlash = Math.max(0, stressFlash - dt);
       blockedMsgCd = Math.max(0, blockedMsgCd - dt);
       stress = Math.max(0, stress - CONFIG.stressDecayPerSec * dt);
 
@@ -325,7 +391,7 @@
         cloud.x += (mum.x + mum.w / 2 - cloud.x) * Math.min(1, dt * 4); // arriva da destra e si piazza sulla testa
         stress = Math.min(CONFIG.stressMax, stress + CONFIG.bonus.cloudStressPerSec * dt);
         if (cloud.timer <= 0) { cloud = null; cloudCd = CONFIG.bonus.cloudCooldown; }
-        if (stress >= CONFIG.stressMax) { gameOver(); return; }
+        if (stress >= CONFIG.stressMax) { lastCause = CAUSE_LABELS.rain; gameOver(); return; }
       }
 
       // Fisica della mamma
@@ -412,7 +478,8 @@
     }
 
     function drawMum() {
-      // Sprite originale mum.png raddoppiato, pixel netti; leggero rimbalzo in corsa
+      // Sprite ad alta risoluzione ridotto a misura di gioco: qui serve l'interpolazione,
+      // non il pixel netto. Leggero rimbalzo in corsa.
       var bob = (state === 'play' && mum.onGround) ? Math.abs(Math.sin(t * 14)) * 4 : 0;
       var x = mum.x, y = mum.y - mum.h - bob;
       if (mum.shoutAnim > 0) { x += (Math.random() - 0.5) * 5; y += (Math.random() - 0.5) * 5; }
@@ -420,7 +487,7 @@
       ctx.fillStyle = 'rgba(0,0,0,0.12)';
       ctx.beginPath(); ctx.ellipse(mum.x + mum.w / 2, GROUND + 3, 32 * sh, 4, 0, 0, Math.PI * 2); ctx.fill();
       if (invuln > 0 && Math.floor(t * 12) % 2 === 0) return; // lampeggio dopo un colpo
-      ctx.imageSmoothingEnabled = false;
+      ctx.imageSmoothingEnabled = true;
       if (sickTimer > 0) {
         // Ondeggia barcollando con lo sprite tinto di verde
         var sway = Math.sin(t * 4) * 0.06;
@@ -429,8 +496,8 @@
         ctx.rotate(sway);
         ctx.translate(-(x + mum.w / 2), -mum.y);
         var sickImg = getSickSprite();
-        if (sickImg) ctx.drawImage(sickImg, Math.round(x), Math.round(y), mum.w, mum.h);
-        else drawImg(img.mum, Math.round(x), Math.round(y), mum.w, mum.h);
+        if (sickImg) ctx.drawImage(sickImg, x, y, mum.w, mum.h);
+        else drawImg(img.mum, x, y, mum.w, mum.h);
         ctx.restore();
         // Gocce di sudore verdastre e spirale di nausea sopra la testa
         ctx.fillStyle = '#82c91e';
@@ -448,7 +515,7 @@
         }
         ctx.stroke();
       } else {
-        drawImg(img.mum, Math.round(x), Math.round(y), mum.w, mum.h);
+        drawImg(img.mum, x, y, mum.w, mum.h);
       }
     }
 
@@ -746,9 +813,82 @@
       ctx.restore();
     }
 
+    // n pixel CSS espressi in unità logiche: i pulsanti restano grandi al dito
+    // anche quando la vista è molto scalata (schermo intero in verticale).
+    function px(n) { return n / scale; }
+
+    // Pulsanti sempre disegnati dentro il canvas: a schermo intero i pulsanti HTML
+    // della pagina possono non vedersi (Chrome su macOS), questi sì.
+    function hudButtons() {
+      var r = {}, size = Math.max(34, px(44)), pad = Math.max(10, px(12));
+      var x = viewW - pad - size;
+      if (isFullscreen()) { r.close = { x: x, y: pad, w: size, h: size }; x -= size + px(8); }
+      if (state === 'play' || state === 'pause') r.pause = { x: x, y: pad, w: size, h: size };
+      return r;
+    }
+
+    function overlayCy() { return Math.min(GROUND - 150, viewH * 0.4); }
+
+    function pauseButtons() {
+      var w = Math.min(viewW * 0.42, Math.max(150, px(170)));
+      var h = Math.max(46, px(52)), gap = Math.max(14, px(16)), y = overlayCy() + Math.max(52, px(52));
+      return {
+        resume: { x: viewW / 2 - w - gap / 2, y: y, w: w, h: h },
+        exit: { x: viewW / 2 + gap / 2, y: y, w: w, h: h }
+      };
+    }
+
+    // Pulsante tondo con icona: pausa (due sbarre), ripresa (triangolo) o chiusura (croce)
+    function drawIconButton(b, icon, color) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, b.w * 0.07);
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(b.x, b.y, b.w, b.h, b.w / 2); else ctx.rect(b.x, b.y, b.w, b.h);
+      ctx.fill(); ctx.stroke();
+      var cx = b.x + b.w / 2, cy = b.y + b.h / 2, u = b.w * 0.22;
+      ctx.lineWidth = Math.max(2.5, b.w * 0.09); ctx.lineCap = 'round';
+      if (icon === 'pause') {
+        ctx.beginPath();
+        ctx.moveTo(cx - u * 0.55, cy - u); ctx.lineTo(cx - u * 0.55, cy + u);
+        ctx.moveTo(cx + u * 0.55, cy - u); ctx.lineTo(cx + u * 0.55, cy + u);
+        ctx.stroke();
+      } else if (icon === 'play') {
+        ctx.fillStyle = color; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx - u * 0.6, cy - u); ctx.lineTo(cx + u, cy); ctx.lineTo(cx - u * 0.6, cy + u);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(cx - u, cy - u); ctx.lineTo(cx + u, cy + u);
+        ctx.moveTo(cx + u, cy - u); ctx.lineTo(cx - u, cy + u);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Promemoria dei comandi: senza i pulsantoni, a schermo intero non si saprebbe cosa premere
+    function drawControlsHint() {
+      if (!isFullscreen() || buttons || state !== 'play') return;
+      var txt = ('ontouchstart' in global)
+        ? 'Tocca a sinistra: salta · a destra: impreca'
+        : 'SPAZIO salta · X impreca · P pausa';
+      // A mezza altezza fra il terreno e il bordo, con un alone bianco:
+      // altrimenti la scritta finisce sopra i trattini del terreno
+      var y = Math.min(viewH - Math.max(10, px(10)), GROUND + Math.max(42, (viewH - GROUND) * 0.55));
+      ctx.save();
+      ctx.font = Math.max(15, px(15)) + 'px ' + FONT;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(4, px(4)); ctx.strokeStyle = '#fff';
+      ctx.strokeText(txt, viewW / 2, y);
+      ctx.fillStyle = 'rgba(73, 80, 87, 0.85)';
+      ctx.fillText(txt, viewW / 2, y);
+      ctx.restore();
+    }
+
     function drawOverlay(title, lines) {
       ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillRect(0, 0, viewW, viewH);
-      var cy = Math.min(GROUND - 150, viewH * 0.4);
+      var cy = overlayCy();
       ctx.fillStyle = '#222'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
       ctx.font = 'bold 34px ' + FONT; ctx.fillText(title, viewW / 2, cy);
       ctx.font = '20px ' + FONT;
@@ -758,7 +898,11 @@
     function render() {
       ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
       ctx.clearRect(0, 0, viewW, viewH);
-      if (shake > 0) ctx.translate((Math.random() - 0.5) * 8 * shake / 0.3, (Math.random() - 0.5) * 8 * shake / 0.3);
+      // Intensità proporzionale a quanto resta: la scossa sfuma invece di tagliarsi di netto
+      if (shake > 0) {
+        var amp = 8 * (shake / (shakeDur || CONFIG.hitShake));
+        ctx.translate((Math.random() - 0.5) * amp, (Math.random() - 0.5) * amp);
+      }
 
       drawBonusBackground();
       drawGround();
@@ -793,6 +937,8 @@
         drawButton(buttons.shout, 'IMPRECA', '#d6336c', pressed.shout > 0, state !== 'play' || shoutCooldown === 0);
       }
 
+      drawControlsHint();
+
       var touch = 'ontouchstart' in global;
       if (state === 'ready') {
         drawOverlay('Mamma in Therapy: la fuga', buttons
@@ -800,10 +946,21 @@
           : touch
             ? ['Tocca a sinistra per saltare', 'Tocca a destra per imprecare', 'Tocca per iniziare']
             : ['SPAZIO / ↑ per saltare', 'X / → per imprecare', 'Premi un tasto per iniziare']);
+      } else if (state === 'pause') {
+        drawOverlay('In pausa', ['Punti: ' + score]);
+        var pb = pauseButtons();
+        drawButton(pb.resume, 'RIPRENDI', '#1b6969', false, true);
+        drawButton(pb.exit, 'ESCI', '#d6336c', false, true);
       } else if (state === 'over') {
-        drawOverlay('Esaurita!', ['Punti: ' + score + (score >= best && score > 0 ? '  (nuovo record!)' : ''),
-          touch || buttons ? 'Tocca per riprovare' : 'Premi SPAZIO per riprovare']);
+        drawOverlay('Esaurita per ' + (lastCause || 'troppo stress'),
+          ['Punti: ' + score + (score >= best && score > 0 ? '  (nuovo record!)' : ''),
+           touch || buttons ? 'Tocca per riprovare' : 'Premi SPAZIO per riprovare']);
       }
+
+      // Pausa e chiusura stanno sopra a tutto, overlay compresi
+      var hud = hudButtons();
+      if (hud.pause) drawIconButton(hud.pause, state === 'pause' ? 'play' : 'pause', '#1b6969');
+      if (hud.close) drawIconButton(hud.close, 'close', '#d6336c');
     }
 
     // --- Ridimensionamento "EXPAND" ---
@@ -857,7 +1014,16 @@
     }
     requestAnimationFrame(loop);
 
-    return { resize: resize, container: container };
+    return {
+      resize: resize,
+      container: container,
+      pause: pause,
+      resume: resume,
+      togglePause: togglePause,
+      // Usato da MammaRunner.enableFullscreen per far chiudere lo schermo intero
+      // al pulsante disegnato sul canvas.
+      setFullscreen: function (hooks) { fs = hooks; }
+    };
   }
 
   // --- Schermo intero ---
@@ -900,6 +1066,13 @@
     });
     if (openBtn) openBtn.addEventListener('click', open);
     if (closeBtn) closeBtn.addEventListener('click', close);
+    // Il gioco disegna da sé il tasto di chiusura dentro il canvas: qui gli diamo come chiudere
+    if (game.setFullscreen) {
+      game.setFullscreen({
+        isOpen: function () { return container.classList.contains('mit-fs'); },
+        close: close
+      });
+    }
     return { open: open, close: close };
   };
 
@@ -913,11 +1086,12 @@ document.addEventListener('DOMContentLoaded', function () {
   var canvas = document.getElementById('mit-runner');
   if (!canvas) return;
   var game = MammaRunner(canvas, {
-    mum: 'images/mum.png',
+    mum: 'images/mum-hd.png',
     baby: 'images/monster.png',
     baby2: 'images/monster2.png',
     poop: 'images/poop3.png'
   });
-  MammaRunner.enableFullscreen(game, game.container,
-    document.getElementById('mit-game-open'), document.getElementById('mit-game-close'));
+  // Il tasto di chiusura dello schermo intero lo disegna il gioco dentro al canvas,
+  // così resta visibile ovunque: qui serve solo quello di apertura.
+  MammaRunner.enableFullscreen(game, game.container, document.getElementById('mit-game-open'), null);
 });
