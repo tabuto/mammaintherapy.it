@@ -24,7 +24,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&amp;display=swap" rel="stylesheet">
   <link href="css/style.css" rel="stylesheet">
   <script src="js/mit.js" defer></script>
-  <script src="js/game_v2.js" defer></script>
+  <script src="js/game_v3.js" defer></script>
 </head>
 <body>
 
@@ -100,14 +100,28 @@
     </ul>
 
     <section class="game" aria-label="Il gioco di Mamma in Therapy">
-      <canvas id="mit-runner" width="800" height="320"></canvas>
+      <div class="mit-game" id="mit-game">
+        <canvas id="mit-runner" width="720" height="320"></canvas>
+        <button type="button" class="mit-close" id="mit-game-close" aria-label="Chiudi schermo intero">&#10005;</button>
+      </div>
+      <p class="game-actions">
+        <button type="button" class="button" id="mit-game-open">&#9974; Gioca a schermo intero</button>
+      </p>
       <details class="game-help">
         <summary>Guida al gioco</summary>
         <p>
           Da fermi: un tasto qualsiasi (o un tocco) per iniziare.<br>
           <strong>SPAZIO</strong> o <strong>&#8593;</strong> per saltare,
-          <strong>X</strong> o <strong>&#8594;</strong> per imprecare e far sparire i guai.<br>
-          Da telefono: tocca a sinistra per saltare, a destra per imprecare.
+          <strong>X</strong> o <strong>&#8594;</strong> per imprecare e abbattere i cartelli
+          degli scioperi.<br>
+          Da telefono: tocca a sinistra per saltare, a destra per imprecare; a schermo
+          intero compaiono i due pulsanti <strong>SALTA</strong> e <strong>IMPRECA</strong>.
+        </p>
+        <p>
+          Ogni guaio addosso alza la barra dello <strong>stress</strong>: a 100 la partita
+          finisce. Virus e stafilococco ti fanno ammalare e per dieci secondi non si salta.
+          Ogni trenta secondi arrivano quindici secondi di <strong>ferie</strong>: cocktail,
+          birra e libri abbassano lo stress, ma attenzione alla nuvola di pioggia.
         </p>
       </details>
     </section>

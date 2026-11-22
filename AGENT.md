@@ -169,9 +169,17 @@ divergere.
 - Nel font dei titoli (ThinkNothing) l'apostrofo è illeggibile: il
   `@font-face` esclude `U+0027` e `U+2019` con `unicode-range`, così
   l'apostrofo ricade su Indie Flower. Non rimuovere quella riga.
-- `js/mit.js` (banner cookie, `gaSendEvent`) e `js/game_v2.js` (il gioco) si
+- `js/mit.js` (banner cookie, `gaSendEvent`) e `js/game_v3.js` (il gioco) si
   caricano con `defer`. L'evento Analytics `goToBlog` sulla card Blog va
   conservato.
+- Il gioco (`js/game_v3.js`, runner v6) si avvia da sé sul canvas `#mit-runner`
+  e prende gli sprite da `images/`. Il canvas **deve** stare dentro
+  `.mit-game#mit-game`: lo script misura quel contenitore e ci aggancia lo
+  schermo intero, con `#mit-game-open` per aprirlo e `#mit-game-close` per
+  chiuderlo. Il bilanciamento (stress, malattia, ferie, velocità) sta tutto in
+  `CONFIG` in testa al file, esposto anche come `MammaRunner.CONFIG`. Il gioco
+  manda eventi Analytics `game/start` e `game/gameOver` tramite `gaSendEvent`,
+  se presente.
 - Le pagine in costruzione usano `<p class="page-wip">…</p>`: quando arriva il
   contenuto vero, va rimosso (e con lui ogni frase tipo "nel frattempo").
 

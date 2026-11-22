@@ -25,7 +25,7 @@ step, nessun framework, nessuna dipendenza da installare.
 | `css/ThinkNothing.woff2` | font dei titoli (il `.otf` è l'originale) |
 | `css/mitblog.css` | foglio di stile del Blogspot esterno, **non** di questo sito |
 | `js/mit.js` | banner cookie e invio eventi ad Analytics |
-| `js/game_v2.js` | il gioco della home (`game_v1.js` è la versione precedente) |
+| `js/game_v3.js` | il gioco della home (`game_v2.js` e `game_v1.js` sono le versioni precedenti) |
 | `img/` | logo, icone social e `img/articles/` con le foto dei post |
 | `404.html`, `404.shtml`, `400.shtml`, `courtesy.html` | pagine di servizio |
 | `mit/`, `pycustomers/`, `images/` | materiale storico, fuori dal sito nuovo |
