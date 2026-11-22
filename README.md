@@ -27,8 +27,10 @@ step, nessun framework, nessuna dipendenza da installare.
 | `js/mit.js` | banner cookie e invio eventi ad Analytics |
 | `js/game_v3.js` | il gioco della home (`game_v2.js` e `game_v1.js` sono le versioni precedenti) |
 | `img/` | logo, icone social e `img/articles/` con le foto dei post |
+| `images/mum-hd.png` | la mamma del gioco (gli altri sprite sono `monster*.png` e `poop3.png`) |
 | `404.html`, `404.shtml`, `400.shtml`, `courtesy.html` | pagine di servizio |
-| `mit/`, `pycustomers/`, `images/` | materiale storico, fuori dal sito nuovo |
+| `mit/`, `pycustomers/` | materiale storico, fuori dal sito nuovo |
+| `images/old/`, `images/mum.png` | sprite delle versioni precedenti del gioco |
 | `backlog/` | i task svolti, con decisioni e motivazioni |
 | `.github/workflows/deploy-ftp.yml` | pubblicazione via FTP |
 

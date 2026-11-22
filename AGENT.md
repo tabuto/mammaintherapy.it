@@ -172,14 +172,18 @@ divergere.
 - `js/mit.js` (banner cookie, `gaSendEvent`) e `js/game_v3.js` (il gioco) si
   caricano con `defer`. L'evento Analytics `goToBlog` sulla card Blog va
   conservato.
-- Il gioco (`js/game_v3.js`, runner v6) si avvia da sé sul canvas `#mit-runner`
-  e prende gli sprite da `images/`. Il canvas **deve** stare dentro
-  `.mit-game#mit-game`: lo script misura quel contenitore e ci aggancia lo
-  schermo intero, con `#mit-game-open` per aprirlo e `#mit-game-close` per
-  chiuderlo. Il bilanciamento (stress, malattia, ferie, velocità) sta tutto in
-  `CONFIG` in testa al file, esposto anche come `MammaRunner.CONFIG`. Il gioco
-  manda eventi Analytics `game/start` e `game/gameOver` tramite `gaSendEvent`,
-  se presente.
+- Il gioco (`js/game_v3.js`, runner v7) si avvia da sé sul canvas `#mit-runner`
+  e prende gli sprite da `images/` (la mamma è `images/mum-hd.png`, ad alta
+  risoluzione: va disegnata con `imageSmoothingEnabled`, non a pixel netti). Il
+  canvas **deve** stare dentro `.mit-game#mit-game`: lo script misura quel
+  contenitore e ci aggancia lo schermo intero, aperto da `#mit-game-open`.
+  Pausa e chiusura dello schermo intero sono **disegnate dentro al canvas**, non
+  in HTML: a schermo intero i pulsanti della pagina possono non vedersi (Chrome
+  su macOS), quelli sul canvas sì. Non reintrodurre un tasto di chiusura HTML.
+  Il bilanciamento (stress, malattia, ferie, velocità, durata delle scosse) sta
+  tutto in `CONFIG` in testa al file, esposto anche come `MammaRunner.CONFIG`.
+  Il gioco manda eventi Analytics `game/start`, `game/pause`, `game/quit` e
+  `game/gameOver` tramite `gaSendEvent`, se presente.
 - Le pagine in costruzione usano `<p class="page-wip">…</p>`: quando arriva il
   contenuto vero, va rimosso (e con lui ogni frase tipo "nel frattempo").
 
