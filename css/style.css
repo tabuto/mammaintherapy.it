@@ -383,13 +383,21 @@ img { max-width: 100%; }
 }
 
 /* ---------------------------------------------------------
-   Il gioco (runner v2 - js/game_v2.js)
+   Il gioco (runner v6 - js/game_v3.js)
    --------------------------------------------------------- */
 
 .game {
 	margin-top: 1.6em;
 	padding-top: 1.2em;
 	border-top: 1px dashed var(--mit-line);
+}
+
+/* Contenitore del gioco: in pagina segue la larghezza della colonna,
+   a schermo intero copre tutto il display. */
+.mit-game {
+	position: relative;
+	width: 100%;
+	background: #fff;
 }
 
 /* Le dimensioni reali del canvas le calcola lo script sulla larghezza del
@@ -399,15 +407,73 @@ img { max-width: 100%; }
 	width: 100%;
 	max-width: 100%;
 	height: auto;
-	aspect-ratio: 800 / 320;
+	aspect-ratio: 720 / 320;
 	margin: 0 auto;
 	border: 1px solid var(--mit-line);
 	border-radius: 10px;
 	background: #fff;
 	cursor: pointer;
-	touch-action: manipulation;
+	touch-action: none;
 	-webkit-user-select: none;
 	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* Schermo intero "finto": il contenitore si fissa a tutto schermo, così
+   funziona anche su iPhone, dove l'API Fullscreen non vale per i <div>.
+   Dove l'API esiste, lo script la richiede in aggiunta. */
+.mit-game.mit-fs {
+	position: fixed;
+	inset: 0;
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: auto;
+	height: 100vh;
+	height: 100dvh;
+	padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.mit-game.mit-fs #mit-runner {
+	aspect-ratio: auto;
+	border: 0;
+	border-radius: 0;
+}
+
+html.mit-fs-lock,
+html.mit-fs-lock body {
+	overflow: hidden;
+	overscroll-behavior: none;
+}
+
+/* Il tasto di chiusura compare solo a schermo intero */
+.mit-close {
+	display: none;
+	position: absolute;
+	top: calc(env(safe-area-inset-top) + 8px);
+	right: calc(env(safe-area-inset-right) + 8px);
+	width: 44px;
+	height: 44px;
+	border: 2px solid var(--mit-ink);
+	border-radius: 50%;
+	background: #fff;
+	color: var(--mit-ink);
+	font-family: var(--font-ui);
+	font-size: 1.1rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.mit-game.mit-fs .mit-close { display: block; }
+
+.mit-close:focus-visible {
+	outline: 3px solid #9ad1d1;
+	outline-offset: 2px;
+}
+
+.game-actions {
+	margin: 0.9em 0 0;
 }
 
 .game-help {
