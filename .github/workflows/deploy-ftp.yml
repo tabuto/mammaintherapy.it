@@ -1,4 +1,4 @@
-# Deploy incrementale via FTP dei file modificati su main.
+# Deploy incrementale via FTP dei file modificati su main, dentro httpdocs/.
 # Pubblica in FTPS (TLS esplicito): richiede security=strict e FTP_SERVER impostato
 # all'hostname del certificato, non all'IP ne' a mammaintherapy.it.
 name: Deploy FTP
@@ -13,9 +13,9 @@ on:
         type: boolean
         default: true
       server_dir:
-        description: "Cartella remota di destinazione (deve finire con /). Lasciare _deploytest/ per provare senza toccare il sito; './' pubblica sul sito reale"
+        description: "Cartella remota di destinazione (deve finire con /). Lasciare httpdocs/_deploytest/ per provare senza toccare il sito (il risultato e' visibile su https://mammaintherapy.it/_deploytest/); 'httpdocs/' pubblica sul sito reale"
         type: string
-        default: "_deploytest/"
+        default: "httpdocs/_deploytest/"
       protocol:
         description: "Protocollo: ftps (cifrato, TLS esplicito sulla 21) oppure ftp (in chiaro, se l'hosting resetta il canale dati)"
         type: choice
@@ -62,10 +62,11 @@ jobs:
           # vuoto -> l'action usa il suo default (21); serve solo per ftps-legacy (990)
           port: ${{ github.event_name == 'workflow_dispatch' && inputs.port || '' }}
           local-dir: ./
-          # push su main -> sito reale; run manuale -> la cartella scelta negli input
-          # (se la root di login FTP non coincide con la document root, sostituire './'
-          #  qui sotto con es. public_html/ o httpdocs/)
-          server-dir: ${{ github.event_name == 'workflow_dispatch' && inputs.server_dir || './' }}
+          # push su main -> sito reale; run manuale -> la cartella scelta negli input.
+          # ATTENZIONE: il login FTP arriva nella root dell'account ("/"), che NON e' la
+          # document root servita da nginx: quella e' httpdocs/ (Plesk). Con './' il deploy
+          # riesce ma pubblica in un posto che il web non legge, e il sito resta invariato.
+          server-dir: ${{ github.event_name == 'workflow_dispatch' && inputs.server_dir || 'httpdocs/' }}
           # strict = rejectUnauthorized: true. Il default dell'action e' 'loose', che cifra
           # ma NON autentica il server: un intercettatore potrebbe presentare un certificato
           # qualunque e leggere la password FTP. 'strict' lo impedisce, ma pretende che
